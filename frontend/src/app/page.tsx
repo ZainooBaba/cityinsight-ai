@@ -60,7 +60,7 @@ export default function Dashboard() {
         <h2 className="text-xl font-semibold mb-4">Upload Transcript</h2>
         <input
           type="file"
-          accept=".txt"
+          accept=".pdf,.txt"
           onChange={(e) => setFile(e.target.files?.[0] || null)}
           className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4
                      file:rounded file:border-0 file:text-sm file:font-semibold

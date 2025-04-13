@@ -16,6 +16,7 @@ backend/venv/
 backend/*.pyc
 backend/.pytest_cache/
 
+
 # === Supabase ===
 supabase/.temp/
 supabase/migrations/
