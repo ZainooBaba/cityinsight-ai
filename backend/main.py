@@ -1,20 +1,24 @@
-# backend/main.py
 from fastapi import FastAPI, UploadFile, File
-import openai
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-@app.get("/")
-def read_root():
-    return {"message": "Backend is running"}
+# Enable CORS so frontend can call backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.post("/summarize/")
-async def summarize_transcript(file: UploadFile = File(...)):
+async def summarize(file: UploadFile = File(...)):
     content = await file.read()
     text = content.decode("utf-8")
 
-    # Mocked summary for now
+    # Temporary mock response
     return {
-        "summary": "This is a summary of the transcript.",
-        "topics": ["budget", "transportation", "housing"]
+        "summary": "This is a mock summary of the transcript.",
+        "topics": ["housing", "budget", "zoning"]
     }
