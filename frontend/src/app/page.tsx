@@ -24,20 +24,36 @@ export default function Dashboard() {
   const handleUpload = async () => {
     if (!file) return
     setSubmitting(true)
-
+    setSummary('')
+    setTopics([])
+  
     const formData = new FormData()
     formData.append('file', file)
-
+  
     try {
-      const res = await axios.post('http://localhost:8000/summarize/', formData)
-      setSummary(res.data.summary)
-      setTopics(res.data.topics)
+      // Step 1: Get job ID
+      const { data } = await axios.post('http://localhost:8000/summarize/', formData)
+      const jobId = data.job_id
+  
+      // Step 2: Poll status endpoint
+      const poll = async () => {
+        const res = await axios.get(`http://localhost:8000/status/${jobId}`)
+        if (res.data.status === 'done') {
+          setSummary(res.data.summary)
+          setTopics(res.data.topics || []) // handle empty
+          setSubmitting(false)
+        } else {
+          setTimeout(poll, 2000) // try again in 2s
+        }
+      }
+  
+      poll()
     } catch (err) {
       console.error(err)
-    } finally {
       setSubmitting(false)
     }
   }
+  
 
   if (loading || !user) return <p className="text-white p-8">Loading...</p>
 
@@ -73,21 +89,31 @@ export default function Dashboard() {
         >
           {submitting ? 'Processing...' : 'Submit'}
         </button>
+        
       </div>
+
+      {submitting && (
+        <p className="text-sm text-gray-400 mt-2">Processing your file. This might take a moment...</p>
+      )}
 
       {summary && (
         <div className="mt-8 max-w-2xl mx-auto bg-zinc-800 p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-2">Summary</h3>
-          <p className="text-gray-200">{summary}</p>
+          <p className="text-gray-200 whitespace-pre-line">{summary}</p>
 
-          <h4 className="mt-4 font-medium">Flagged Topics</h4>
-          <ul className="list-disc list-inside text-gray-300">
-            {topics.map((t) => (
-              <li key={t}>{t}</li>
-            ))}
-          </ul>
+          {topics.length > 0 && (
+            <>
+              <h4 className="mt-4 font-medium">Flagged Topics</h4>
+              <ul className="list-disc list-inside text-gray-300">
+                {topics.map((t) => (
+                  <li key={t}>{t}</li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
       )}
+
     </main>
   )
 }
