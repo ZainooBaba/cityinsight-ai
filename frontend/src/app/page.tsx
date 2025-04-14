@@ -14,6 +14,8 @@ export default function Dashboard() {
   const [summary, setSummary] = useState('')
   const [topics, setTopics] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
+  const [history, setHistory] = useState<any[]>([])
+
 
   useEffect(() => {
     if (!loading && !user) {
@@ -21,14 +23,36 @@ export default function Dashboard() {
     }
   }, [loading, user, router])
 
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!user) return
+      const { data, error } = await supabase
+        .from('summaries')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+  
+      if (error) {
+        console.error('Error fetching history:', error)
+      } else {
+        setHistory(data || [])
+      }
+    }
+  
+    fetchHistory()
+  }, [user])
+  
+
   const handleUpload = async () => {
-    if (!file) return
+    if (!file || !user) return
     setSubmitting(true)
     setSummary('')
     setTopics([])
   
     const formData = new FormData()
     formData.append('file', file)
+    formData.append('user_id', user.id)
+    formData.append('file_name', file.name)
   
     try {
       // Step 1: Get job ID
@@ -40,10 +64,10 @@ export default function Dashboard() {
         const res = await axios.get(`http://localhost:8000/status/${jobId}`)
         if (res.data.status === 'done') {
           setSummary(res.data.summary)
-          setTopics(res.data.topics || []) // handle empty
+          setTopics(res.data.topics || [])
           setSubmitting(false)
         } else {
-          setTimeout(poll, 2000) // try again in 2s
+          setTimeout(poll, 2000)
         }
       }
   
@@ -53,6 +77,7 @@ export default function Dashboard() {
       setSubmitting(false)
     }
   }
+  
   
 
   if (loading || !user) return <p className="text-white p-8">Loading...</p>
@@ -117,6 +142,25 @@ export default function Dashboard() {
           )}
         </div>
       )}
+
+
+    {history.length > 0 && (
+      <div className="mt-12 max-w-2xl mx-auto bg-zinc-800 p-6 rounded-lg shadow-md">
+        <h3 className="text-lg font-semibold mb-4">Past Submissions</h3>
+        <ul className="divide-y divide-zinc-700">
+          {history.map((item) => (
+            <li key={item.id} className="py-4">
+              <div className="text-sm text-gray-400 mb-1">
+                {new Date(item.created_at).toLocaleString()}
+              </div>
+              <div className="font-medium text-white">{item.file_name}</div>
+              <div className="text-gray-300 mt-1 line-clamp-2">{item.summary?.slice(0, 200)}...</div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+
 
     </main>
   )
