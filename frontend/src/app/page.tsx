@@ -61,6 +61,10 @@ export default function Dashboard() {
     <main className="min-h-screen bg-zinc-900 text-white p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">CityInsight AI</h1>
+        <div className="text-sm text-gray-400 mt-2">
+          You are logged in as: <span className="font-semibold text-white">{user?.role}</span>
+        </div>
+
         <button
           onClick={async () => {
             await supabase.auth.signOut()
